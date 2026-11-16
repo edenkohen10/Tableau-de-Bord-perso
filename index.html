@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    document.documentElement.classList.add("booting");
+    try {
+      var saved = JSON.parse(localStorage.getItem("tableau-de-bord-perso") || "null");
+      if (saved && saved.theme === "light") document.documentElement.dataset.theme = "light";
+    } catch (err) {}
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Tableau de bord personnel : agenda du jour, tâches, habitudes et objectifs, enregistrés dans le navigateur.">
+  <meta name="theme-color" content="#12110f">
+  <title>Tableau de bord</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2312110f'/%3E%3Ccircle cx='16' cy='16' r='5' fill='none' stroke='%23e4b07a' stroke-width='1.6'/%3E%3Cpath d='M16 4.5v3M16 24.5v3M4.5 16h3M24.5 16h3M7.2 7.2l2.1 2.1M22.7 22.7l2.1 2.1M24.8 7.2l-2.1 2.1M9.3 22.7l-2.1 2.1' fill='none' stroke='%23e4b07a' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div>
+        <div class="brand">
+          <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+            <circle cx="16" cy="16" r="5.2" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+            <path d="M16 3.2v3.2M16 25.6v3.2M3.2 16h3.2M25.6 16h3.2M6.7 6.7l2.2 2.2M23.1 23.1l2.2 2.2M25.3 6.7l-2.2 2.2M8.9 23.1l-2.2 2.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
+          </svg>
+          <p class="eyebrow" id="today-label">Aujourd’hui</p>
+        </div>
+        <h1 id="greeting">Bonjour.</h1>
+        <p class="lede" id="now-line">Votre journée, en un coup d’œil.</p>
+      </div>
+      <div class="header-side">
+        <ul class="stats">
+          <li><strong id="stat-events">0</strong><span>créneaux</span></li>
+          <li><strong id="stat-tasks">0/0</strong><span>tâches</span></li>
+          <li><strong id="stat-habits">0/0</strong><span>habitudes</span></li>
+        </ul>
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="true">Mode clair</button>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="card card-agenda" aria-labelledby="agenda-title">
+        <div class="card-head">
+          <div>
+            <h2 id="agenda-title">Agenda</h2>
+            <p class="card-sub">Journée en cours</p>
+          </div>
+          <p class="count" id="event-count"></p>
+        </div>
+        <div class="empty" id="agenda-empty" hidden></div>
+        <ol class="agenda" id="agenda-list"></ol>
+        <form class="composer" data-add="event" autocomplete="off">
+          <input class="time" name="time" type="text" inputmode="numeric" value="09:00" required maxlength="8" placeholder="09:00" aria-label="Heure du créneau, par exemple 14:30" spellcheck="false" autocomplete="off">
+          <input name="title" type="text" placeholder="Nouveau créneau" required maxlength="200" aria-label="Intitulé du créneau">
+          <input name="note" type="text" placeholder="Note, facultatif" maxlength="300" aria-label="Note du créneau">
+          <select name="tag" aria-label="Catégorie">
+            <option>Travail</option>
+            <option>Focus</option>
+            <option>Perso</option>
+            <option>Santé</option>
+          </select>
+          <button type="submit" class="primary">Ajouter</button>
+        </form>
+      </section>
+
+      <section class="card card-tasks" aria-labelledby="tasks-title">
+        <div class="card-head">
+          <div>
+            <h2 id="tasks-title">Tâches</h2>
+            <p class="card-sub">À cocher dans la journée</p>
+          </div>
+          <p class="count" id="task-count"></p>
+        </div>
+        <p class="empty" id="task-empty" hidden>Aucune tâche. Ajoutez-en une ci-dessous.</p>
+        <ul class="plain" id="task-list"></ul>
+        <form class="composer" data-add="task" autocomplete="off">
+          <input name="text" type="text" placeholder="Nouvelle tâche" required maxlength="200" aria-label="Nouvelle tâche">
+          <button type="submit" class="primary">Ajouter</button>
+        </form>
+      </section>
+
+      <section class="card card-habits" aria-labelledby="habits-title">
+        <div class="card-head">
+          <div>
+            <h2 id="habits-title">Habitudes</h2>
+            <p class="card-sub">Aujourd’hui, et les six jours d’avant</p>
+          </div>
+          <p class="count" id="habit-count"></p>
+        </div>
+        <p class="empty" id="habit-empty" hidden>Aucune habitude. Ajoutez-en une ci-dessous.</p>
+        <ul class="plain" id="habit-list"></ul>
+        <form class="composer" data-add="habit" autocomplete="off">
+          <input name="name" type="text" placeholder="Nouvelle habitude" required maxlength="120" aria-label="Nouvelle habitude">
+          <button type="submit" class="primary">Ajouter</button>
+        </form>
+      </section>
+
+      <section class="card card-goals" aria-labelledby="goals-title">
+        <div class="card-head">
+          <div>
+            <h2 id="goals-title">Objectifs</h2>
+            <p class="card-sub">Ce que vous voulez voir avancer</p>
+          </div>
+          <p class="count" id="goal-count"></p>
+        </div>
+        <div class="bar" id="goal-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-label="Objectifs atteints">
+          <span id="goal-bar"></span>
+        </div>
+        <p class="empty" id="goal-empty" hidden>Aucun objectif. Notez ce que vous voulez faire avancer.</p>
+        <ul class="plain" id="goal-list"></ul>
+        <form class="composer" data-add="goal" autocomplete="off">
+          <input name="text" type="text" placeholder="Nouvel objectif" required maxlength="200" aria-label="Nouvel objectif">
+          <button type="submit" class="primary">Ajouter</button>
+        </form>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Tout reste enregistré dans ce navigateur.</p>
+      <div class="footer-actions">
+        <button type="button" id="export-btn" class="text-btn">Exporter mes données en JSON</button>
+        <label class="text-btn file-btn">
+          Importer
+          <input id="import-input" type="file" accept="application/json,.json">
+        </label>
+      </div>
+    </footer>
+  </div>
+
+  <div class="backdrop" id="dialog" hidden>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+      <h3 id="dialog-title">Restaurer une sauvegarde</h3>
+      <p id="dialog-text">Ce fichier va remplacer l’agenda, les tâches, les habitudes et les objectifs enregistrés dans ce navigateur.</p>
+      <div class="dialog-actions">
+        <button type="button" id="dialog-cancel" class="text-btn">Annuler</button>
+        <button type="button" id="dialog-ok" class="primary">Remplacer</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="toast" id="toast" role="status" aria-live="polite"></p>
+  <noscript>
+    <p class="noscript">Activez JavaScript pour utiliser le tableau de bord. Aucune installation n’est nécessaire.</p>
+  </noscript>
+  <script src="script.js"></script>
+</body>
+</html>
